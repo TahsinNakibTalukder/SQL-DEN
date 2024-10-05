@@ -1,0 +1,71 @@
+# Segment wise product gross sale finding code :
+
+WITH seg AS (
+  SELECT 
+    salesdate,
+    customer,
+    buz_segt,
+    CONCAT(ROUND(SUM(gross_sales_amt) / 1000000, 2), 'M') AS total_sales_millions,
+    day
+  FROM qw
+  GROUP BY buz_segt  -- Adding missing columns
+),
+aoq AS (
+  SELECT 
+    customer,
+    salesdate,
+    buz_segt,
+    day,
+    ROUND(SUM(orderqty)) AS ordqnty
+  FROM qw
+  GROUP BY buz_segt) 
+
+SELECT 
+	s.buz_segt,
+	s.total_sales_millions,
+  	a.ordqnty
+FROM seg s
+LEFT JOIN aoq a 
+  ON s.customer = a.customer
+  AND s.salesdate = a.salesdate
+  AND s.buz_segt = a.buz_segt  -- Matching this column in the join as well
+ORDER BY s.total_sales_millions desc;
+
+
+# Category wise product gross sales finding code:
+
+WITH seg AS (
+  SELECT 
+    salesdate,
+    customer,
+    buz_segt,
+    category,
+    SUM(gross_sales_amt) / 1000 AS total_sales_value, 
+    CONCAT(ROUND(SUM(gross_sales_amt) / 1000, 0), 'K') AS total_sales_thousands,
+    day
+  FROM qw
+  GROUP BY category  -- Adding missing columns
+),
+aoq AS (
+  SELECT 
+    customer,
+    salesdate,
+    buz_segt,
+    day,
+  	category,
+    ROUND(SUM(orderqty)) AS ordqnty
+  FROM qw
+  GROUP BY category) 
+
+SELECT 
+	s.category,
+    s.buz_segt,
+	s.total_sales_thousands,
+  	a.ordqnty
+FROM seg s
+LEFT JOIN aoq a 
+  ON s.customer = a.customer
+  AND s.salesdate = a.salesdate
+  AND s.category = a.category  -- Matching this column in the join as well
+ORDER BY s.total_sales_value desc;
+
